@@ -1,48 +1,112 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <algorithm>
+#include <cmath>
 #include <stdlib.h>
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
 
 typedef struct Vec2f {
 	float x;
 	float y;
 } Vec2f;
 
+void limitVec(Vec2f *vec, float max) {
+	if(vec->x >= 0) {
+		vec->x = std::min(vec->x, max);
+	} else if(vec->x < 0) {
+		vec->x = std::max(vec->x, -1.0f * max);
+	}
+
+	if(vec->y >= 0) {
+		vec->y = std::min(vec->y, max);
+	} else if(vec->y < 0) {
+		vec->y = std::max(vec->y, -1.0f * max);
+	}
+}
+
 class Boid {
 	public: 
 		Vec2f pos, vel, accel;
+		float maxForce, maxSpeed;
+		int index;
 
-		Boid(Vec2f pos, Vec2f vel, Vec2f accel) {
+		Boid(Vec2f pos, Vec2f vel, float maxSpeed, float maxForce, int index) {
 			this->pos = pos;
 			this->vel = vel;
-			this->accel = accel;
+			this->accel = (Vec2f){ 0.0, 0.0 };
+
+			this->maxSpeed = maxSpeed;
+
+			this->maxForce = maxForce;
+
+			this->index = index;
 		}
 
-		void update(float deltaTime) {
-			this->pos.x += this->vel.x * deltaTime;
-			this->pos.y += this->vel.y * deltaTime;
+		void update(float deltaTime, std::vector<Boid> flock) {
+			Vec2f targetPos = { 0.0f , 0.0f };
+			int nearby = 0, range = 100;
 
-			this->vel.x += this->accel.x * deltaTime;
-			this->vel.y += this->accel.y * deltaTime;
-
-			if(this->pos.x + 20 >= WINDOW_WIDTH - 1) {
-				this->pos.x = WINDOW_WIDTH - 21;
-				this->vel.x *= -0.75f;
-			} else if (this->pos.x - 20 < 1) {
-				this->pos.x = 21;
-				this->vel.x *= -0.75f;
+			for(const auto& boid : flock) {
+				if(boid.index != this->index) {
+					if(
+						this->pos.x + range > boid.pos.x &&
+						this->pos.x - range < boid.pos.x &&
+						this->pos.y + range > boid.pos.y &&
+						this->pos.y - range < boid.pos.y
+					) {
+						targetPos.x += boid.pos.x;
+						targetPos.y += boid.pos.y;
+						
+						nearby++;
+					}
+				}
 			}
 
-			if(this->pos.y >= WINDOW_HEIGHT - 1) {
-				this->pos.y = WINDOW_HEIGHT - 1;
-				this->vel.y *= -0.75f;
-			} 
+			Vec2f cohesion = {0.0f, 0.0f};
+
+			if(nearby > 0) {
+				targetPos.x /= nearby;
+				targetPos.y /= nearby;
+
+				Vec2f desiredVel = {targetPos.x - this->pos.x, targetPos.y - this->pos.y};
+				
+				float mag = std::sqrt(desiredVel.x * desiredVel.x + desiredVel.y * desiredVel.y);
+				if(mag > 0) {
+					desiredVel.x = (desiredVel.x / mag) * this->maxSpeed;
+					desiredVel.y = (desiredVel.y / mag) * this->maxSpeed;
+				}
+
+				cohesion = (Vec2f){desiredVel.x - this->vel.x, desiredVel.y - this->vel.y};
+			}
+
+			
+			limitVec(&cohesion, this->maxForce);
+			this->accel.x = cohesion.x * 2;
+			this->accel.y = cohesion.y * 2;
+			
+			this->vel.x += this->accel.x * deltaTime;
+			this->vel.y += this->accel.y * deltaTime;
+			
+			limitVec(&this->vel, this->maxSpeed);
+			this->pos.x += this->vel.x * deltaTime;
+			this->pos.y += this->vel.y * deltaTime;
+			
+			if(this->pos.x > WINDOW_WIDTH) {
+				this->pos.x = 0;
+			} else if(this->pos.x < 0) {
+				this->pos.x = WINDOW_WIDTH;
+			}
+			if(this->pos.y > WINDOW_HEIGHT) {
+				this->pos.y = 0;
+			} else if(this->pos.y < 0) {
+				this->pos.y = WINDOW_HEIGHT;
+			}
 		}
 };
 
@@ -63,26 +127,20 @@ int main() {
 
 	std::vector<Boid> flock;
 	
-	
-	flock.push_back(Boid(
-		(Vec2f){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 } ,
-		(Vec2f){ 150.0f, 0 }, 
-		(Vec2f){ 0, 500.0f }
-	));
-	flock.push_back(Boid(
-		(Vec2f){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 } ,
-		(Vec2f){ 100.0f, 0 }, 
-		(Vec2f){ 0, 500.0f }
-	));
-	flock.push_back(Boid(
-		(Vec2f){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 } ,
-		(Vec2f){ 200.0f, 0 }, 
-		(Vec2f){ 0, 500.0f }
-	));
-	
+	srand(time(NULL));
+	for(int i = 0; i < 100; i++) {
+		flock.push_back(Boid(
+			(Vec2f){ WINDOW_WIDTH / 2 + rand() % 10, WINDOW_HEIGHT / 2 + rand() % 10 } ,
+			(Vec2f){ rand() % 500 - 250, rand() % 500 - 250 },
+			300, 
+			100,
+			i
+		));
+	}
+
 	SDL_Event e;
 	bool quit = false;
-	
+
 	std::chrono::steady_clock::time_point curTime = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point prevTime = curTime;	
 
@@ -106,20 +164,18 @@ int main() {
 		
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		for(auto &boid : flock) {
-			SDL_RenderLine(renderer, boid.pos.x - 20, boid.pos.y , boid.pos.x + 20, boid.pos.y);
-			SDL_RenderLine(renderer, boid.pos.x - 20, boid.pos.y , boid.pos.x, boid.pos.y - 34.641f);
-			SDL_RenderLine(renderer, boid.pos.x + 20, boid.pos.y , boid.pos.x, boid.pos.y - 34.641f);
+			SDL_RenderLine(renderer, boid.pos.x - 10, boid.pos.y , boid.pos.x + 10, boid.pos.y);
+			SDL_RenderLine(renderer, boid.pos.x - 10, boid.pos.y , boid.pos.x, boid.pos.y - 17);
+			SDL_RenderLine(renderer, boid.pos.x + 10, boid.pos.y , boid.pos.x, boid.pos.y - 17);
 			
-			boid.update(deltaTime);
+			boid.update(deltaTime, flock);
 		}
 		
-
 		SDL_SetRenderTarget(renderer, nullptr);
 		SDL_RenderTexture(renderer, texture, nullptr, nullptr);
 		
 		SDL_RenderPresent(renderer);
 	}
-
 
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);

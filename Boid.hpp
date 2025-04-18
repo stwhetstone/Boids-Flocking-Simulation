@@ -44,11 +44,23 @@ class Boid {
 				float dist = std::sqrt((this->pos.x() - boid.pos.x()) * (this->pos.x() - boid.pos.x()) + (this->pos.y() - boid.pos.y()) * (this->pos.y() - boid.pos.y()));
 				if(boid.index != this->index && dist < range) {
 						avgPos += boid.pos;
+						avgVel += boid.vel;
 
 						nearby++;
 				}
 			}
 
+
+			/* 
+				https://www.red3d.com/cwr/steer/gdc99/
+				    steering_force = truncate (steering_direction, max_force)
+					acceleration = steering_force / mass
+					velocity = truncate (velocity + acceleration, max_speed)
+					position = position + velocity
+
+					desired_velocity = normalize (position - target) * max_speed
+    				steering = desired_velocity - velocity
+			*/
 			if(nearby > 0) {
 				avgPos /= nearby;
 				avgPos -= this->pos;
@@ -57,13 +69,21 @@ class Boid {
 
 				cohesion = avgPos - this->vel;
 				cohesion.limit(maxForce);
+
+				avgVel /= nearby;
+				avgVel -= this->vel;
+				avgVel.normalize();
+				avgVel *= maxSpeed;
+
+				alignment = avgVel - this->vel;
+				alignment.limit(maxForce);
 			}
 
-			this->accel = cohesion;
-
+			this->accel = cohesion + alignment;
+			
 			this->vel += this->accel * deltaTime;
-            
 			this->vel.limit(this->maxSpeed);
+            
 			this->pos += this->vel * deltaTime;
 
 			this->accel *= 0;

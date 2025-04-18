@@ -41,15 +41,15 @@ class Vec2f {
 
         void limit(float max) {
             if(this->_x >= 0) {
-                this->x(std::min(this->_x, max));
+                this->_x = std::min(this->_x, max);
             } else if(this->_x < 0) {
-                this->x(std::max(this->_x, -1.0f * max));
+                this->_x = std::max(this->_x, -1.0f * max);
             }
         
             if(this->_y >= 0) {
-                this->y(std::min(this->_y, max));
+                this->_y = std::min(this->_y, max);
             } else if(this->_y < 0) {
-                this->y(std::max(this->_y, -1.0f * max));
+                this->_y = std::max(this->_y, -1.0f * max);
             }
         }
 

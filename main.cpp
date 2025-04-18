@@ -35,10 +35,10 @@ int main() {
 	srand(time(NULL));
 	for(int i = 0; i < 100; i++) {
 		flock.push_back(Boid(
-			Vec2f(WINDOW_WIDTH / 2 + rand() % 10, WINDOW_HEIGHT / 2 + rand() % 10),
-			Vec2f(rand() % 500 - 250, rand() % 500 - 250),
-			500, 
-			50,
+			Vec2f(WINDOW_WIDTH / 2 + rand() % 100, WINDOW_HEIGHT / 2 + rand() % 100),
+			Vec2f(rand() % 250 - 250, rand() % 250 - 250),
+			250, 
+			100,
 			i
 		));
 	}

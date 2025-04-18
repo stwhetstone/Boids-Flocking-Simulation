@@ -30,67 +30,43 @@ class Boid {
 			this->accel = Vec2f();
 
 			this->maxSpeed = maxSpeed;
-
 			this->maxForce = maxForce;
 
 			this->index = index;
 		}
 
 		void update(float deltaTime, std::vector<Boid> flock) {
-			Vec2f targetPos, targetVel, separation;
-			int nearby = 0, range = 100;
+			Vec2f cohesion, alignment, separation, 
+					avgPos, avgVel;
+			int nearby = 0, range = 70;
 
 			for(auto& boid : flock) {
-				if(boid.index != this->index) {
-					if(
-						this->pos.x() + range > boid.pos.x() &&
-						this->pos.x() - range < boid.pos.x() &&
-						this->pos.y() + range > boid.pos.y() &&
-						this->pos.y() - range < boid.pos.y()
-					) {
-                        Vec2f dist = this->pos - boid.pos;
-                        dist.normalize();
-                        separation += dist / (range * range * 1.0f);
+				float dist = std::sqrt((this->pos.x() - boid.pos.x()) * (this->pos.x() - boid.pos.x()) + (this->pos.y() - boid.pos.y()) * (this->pos.y() - boid.pos.y()));
+				if(boid.index != this->index && dist < range) {
+						avgPos += boid.pos;
 
-						targetPos += boid.pos;
-						targetVel += boid.vel;
-						
 						nearby++;
-					}
 				}
 			}
 
-			Vec2f cohesion, alignment;
-
 			if(nearby > 0) {
-				targetPos /= nearby;
-                targetVel /= nearby;
-                //separation /= nearby;
+				avgPos /= nearby;
+				avgPos -= this->pos;
+				avgPos.normalize();
+				avgPos *= maxSpeed;
 
-                
-				Vec2f desiredVel(targetPos.x() - this->pos.x(), targetPos.y() - this->pos.y());
-				desiredVel.normalize();
-                desiredVel *= maxSpeed;
-
-                separation.normalize();
-                separation *= maxForce;
-				
-				cohesion = desiredVel - this->vel;
-				alignment = targetVel - this->vel;
-				separation -= this->vel;
-                
-                cohesion.limit(this->maxForce);
-                alignment.limit(this->maxForce);
-                separation.limit(this->maxForce);
+				cohesion = avgPos - this->vel;
+				cohesion.limit(maxForce);
 			}
-			this->accel = cohesion + alignment + separation * 1.1f;
+
+			this->accel = cohesion;
 
 			this->vel += this->accel * deltaTime;
             
 			this->vel.limit(this->maxSpeed);
 			this->pos += this->vel * deltaTime;
 
-            this->accel *= 0;
+			this->accel *= 0;
 		}
 
         void checkBoundary(const int w, const int h) {

@@ -37,14 +37,17 @@ class Boid {
 
 		void update(float deltaTime, std::vector<Boid> flock) {
 			Vec2f cohesion, alignment, separation, 
-					avgPos, avgVel;
-			int nearby = 0, range = 70;
+					avgPos, avgVel, repulsion;
+			int nearby = 0, range = 50;
 
 			for(auto& boid : flock) {
 				float dist = std::sqrt((this->pos.x() - boid.pos.x()) * (this->pos.x() - boid.pos.x()) + (this->pos.y() - boid.pos.y()) * (this->pos.y() - boid.pos.y()));
 				if(boid.index != this->index && dist < range) {
 						avgPos += boid.pos;
 						avgVel += boid.vel;
+
+						repulsion += this->pos - boid.pos;
+						repulsion *= 1.0f / (range * range);
 
 						nearby++;
 				}
@@ -63,7 +66,6 @@ class Boid {
 			*/
 			if(nearby > 0) {
 				avgPos /= nearby;
-				avgPos -= this->pos;
 				avgPos.normalize();
 				avgPos *= maxSpeed;
 
@@ -71,15 +73,21 @@ class Boid {
 				cohesion.limit(maxForce);
 
 				avgVel /= nearby;
-				avgVel -= this->vel;
 				avgVel.normalize();
 				avgVel *= maxSpeed;
 
 				alignment = avgVel - this->vel;
 				alignment.limit(maxForce);
+
+				repulsion /= nearby;
+				repulsion.normalize();
+				repulsion *= maxSpeed;
+
+				separation = repulsion;
+				separation.limit(maxForce); 
 			}
 
-			this->accel = cohesion + alignment;
+			this->accel = cohesion + alignment + separation;
 			
 			this->vel += this->accel * deltaTime;
 			this->vel.limit(this->maxSpeed);

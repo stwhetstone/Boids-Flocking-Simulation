@@ -33,12 +33,12 @@ int main() {
 	std::vector<Boid> flock;
 	
 	srand(time(NULL));
-	for(int i = 0; i < 100; i++) {
+	for(int i = 0; i < 200; i++) {
 		flock.push_back(Boid(
-			Vec2f(WINDOW_WIDTH / 2 + rand() % 100, WINDOW_HEIGHT / 2 + rand() % 100),
+			Vec2f(rand() % WINDOW_WIDTH, rand() % WINDOW_HEIGHT),
 			Vec2f(rand() % 250 - 250, rand() % 250 - 250),
-			250, 
-			100,
+			300, 
+			30,
 			i
 		));
 	}
@@ -49,6 +49,7 @@ int main() {
 	std::chrono::steady_clock::time_point curTime = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point prevTime = curTime;	
 
+	int triangleSize = 4;
 	while(!quit) {
 		while(SDL_PollEvent(&e) != 0) {
 			if(e.type == SDL_EVENT_QUIT) {
@@ -69,9 +70,12 @@ int main() {
 		
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		for(auto &boid : flock) {
-			SDL_RenderLine(renderer, boid.pos.x() - 10, boid.pos.y() , boid.pos.x() + 10, boid.pos.y());
-			SDL_RenderLine(renderer, boid.pos.x() - 10, boid.pos.y() , boid.pos.x(), boid.pos.y() - 17);
-			SDL_RenderLine(renderer, boid.pos.x() + 10, boid.pos.y() , boid.pos.x(), boid.pos.y() - 17);
+			// bottom left to bottom right
+			SDL_RenderLine(renderer, boid.pos.x() - triangleSize, boid.pos.y() - triangleSize / 2, boid.pos.x() + triangleSize, boid.pos.y() - triangleSize / 2);
+			// bottom left to top
+			SDL_RenderLine(renderer, boid.pos.x() - triangleSize, boid.pos.y() - triangleSize / 2, boid.pos.x(), boid.pos.y() - triangleSize * 2);
+			// bottom right to top
+			SDL_RenderLine(renderer, boid.pos.x() + triangleSize, boid.pos.y() - triangleSize / 2, boid.pos.x(), boid.pos.y() - triangleSize * 2);
 			
 			boid.update(deltaTime, flock);
 			boid.checkBoundary(WINDOW_WIDTH, WINDOW_HEIGHT);

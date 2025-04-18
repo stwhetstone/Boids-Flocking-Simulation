@@ -38,21 +38,21 @@ class Boid {
 		void update(float deltaTime, std::vector<Boid> flock) {
 			Vec2f cohesion, alignment, separation, 
 					avgPos, avgVel, repulsion;
-			int nearby = 0, range = 50;
+			int nearby = 0, range = 40;
 
 			for(auto& boid : flock) {
-				float dist = std::sqrt((this->pos.x() - boid.pos.x()) * (this->pos.x() - boid.pos.x()) + (this->pos.y() - boid.pos.y()) * (this->pos.y() - boid.pos.y()));
+				float dist = std::sqrt(
+										(this->pos.x() - boid.pos.x()) * (this->pos.x() - boid.pos.x()) + 
+										(this->pos.y() - boid.pos.y()) * (this->pos.y() - boid.pos.y())
+									);
 				if(boid.index != this->index && dist < range) {
 						avgPos += boid.pos;
 						avgVel += boid.vel;
-
-						repulsion += this->pos - boid.pos;
-						repulsion *= 1.0f / (range * range);
+						repulsion += (this->pos - boid.pos) / (dist * dist);
 
 						nearby++;
 				}
 			}
-
 
 			/* 
 				https://www.red3d.com/cwr/steer/gdc99/
@@ -83,11 +83,12 @@ class Boid {
 				repulsion.normalize();
 				repulsion *= maxSpeed;
 
-				separation = repulsion;
+				separation = repulsion - this->vel;
 				separation.limit(maxForce); 
 			}
 
-			this->accel = cohesion + alignment + separation;
+			float cwt = 3, awt = 2, swt = 0.7;
+			this->accel = (cohesion * cwt) + (alignment * awt) + (separation * swt);
 			
 			this->vel += this->accel * deltaTime;
 			this->vel.limit(this->maxSpeed);

@@ -1,9 +1,5 @@
-#include <iostream>
 #include <vector>
-#include <chrono>
-#include <algorithm>
 #include <cmath>
-#include <stdlib.h>
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
@@ -33,7 +29,7 @@ int main() {
 	std::vector<Boid> flock;
 	
 	srand(time(NULL));
-	for(int i = 0; i < 200; i++) {
+	for(int i = 0; i < 100; i++) {
 		flock.push_back(Boid(
 			Vec2f(rand() % WINDOW_WIDTH, rand() % WINDOW_HEIGHT),
 			Vec2f(rand() % 250 - 250, rand() % 250 - 250),
@@ -49,7 +45,6 @@ int main() {
 	std::chrono::steady_clock::time_point curTime = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point prevTime = curTime;	
 
-	int triangleSize = 4;
 	while(!quit) {
 		while(SDL_PollEvent(&e) != 0) {
 			if(e.type == SDL_EVENT_QUIT) {
@@ -70,12 +65,23 @@ int main() {
 		
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		for(auto &boid : flock) {
+			Vec2f top(boid.pos.x(), boid.pos.y() + Boid::size * 4),
+				bottomLeft(boid.pos.x() - Boid::size, boid.pos.y() + Boid::size / 2), 
+				bottomRight(boid.pos.x() + Boid::size, boid.pos.y() + Boid::size / 2);
+			
+			// find angle between vel and x axis then rotate clockwise 90 degrees
+			float angle = atan2(boid.vel.y(), boid.vel.x()) - 3.14159625 / 2.0;
+			
+			Vec2f::rotate(&top, &boid.pos, angle);
+			Vec2f::rotate(&bottomLeft, &boid.pos, angle);
+			Vec2f::rotate(&bottomRight, &boid.pos, angle);
+
 			// bottom left to bottom right
-			SDL_RenderLine(renderer, boid.pos.x() - triangleSize, boid.pos.y() - triangleSize / 2, boid.pos.x() + triangleSize, boid.pos.y() - triangleSize / 2);
+			SDL_RenderLine(renderer, bottomLeft.x(), bottomLeft.y() , bottomRight.x(), bottomRight.y());
 			// bottom left to top
-			SDL_RenderLine(renderer, boid.pos.x() - triangleSize, boid.pos.y() - triangleSize / 2, boid.pos.x(), boid.pos.y() - triangleSize * 2);
+			SDL_RenderLine(renderer, bottomLeft.x(), bottomLeft.y(), top.x(), top.y());
 			// bottom right to top
-			SDL_RenderLine(renderer, boid.pos.x() + triangleSize, boid.pos.y() - triangleSize / 2, boid.pos.x(), boid.pos.y() - triangleSize * 2);
+			SDL_RenderLine(renderer, bottomRight.x(), bottomRight.y(), top.x(), top.y());
 			
 			boid.update(deltaTime, flock);
 			boid.checkBoundary(WINDOW_WIDTH, WINDOW_HEIGHT);

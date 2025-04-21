@@ -1,14 +1,12 @@
-#include <iostream>
 #include <vector>
 #include "Vec2f.hpp"
 
 #ifndef BOID_H
 #define BOID_H
-namespace Simulation {
-    
-}
+
 class Boid {
 	public: 
+		static int size;
 		Vec2f pos, vel, accel;
 		float maxForce, maxSpeed;
 		int index;
@@ -111,5 +109,7 @@ class Boid {
 			}
         }
 };
+
+int Boid::size = 4;
 
 #endif

@@ -3,4 +3,5 @@ make -C build
 ./build/main
 
 https://www.red3d.com/cwr/papers/1999/gdc99steer.html
+https://thecodingtrain.com/challenges/124-flocking-simulation
 

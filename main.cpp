@@ -1,5 +1,6 @@
 #include <vector>
 #include <cmath>
+#include <chrono>
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
@@ -11,7 +12,7 @@
 #define WINDOW_HEIGHT 720
 
 
-int main() {
+int main(int argc, char **argv) {
 	if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
 		return -1;
 	}

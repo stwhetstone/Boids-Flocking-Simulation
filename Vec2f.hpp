@@ -34,7 +34,7 @@ class Vec2f {
             return this->_y;
         }
         
-        float y(float y) {
+        void y(float y) {
             this->_y = y;
             this->updateLength();
         }

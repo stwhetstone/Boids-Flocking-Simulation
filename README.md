@@ -1,4 +1,6 @@
 cmake -S . -B build  
+cmake --build build  
+./build/main or ./build/Debug/main if on windows  
 make -C build  or  cmake --build build  
 ./build/main   or  ./build/debug/main (windows)
 

@@ -1,13 +1,14 @@
 #include <cmath>
 #include <algorithm>
 
+
 #ifndef VEC2F_H
 #define VEC2F_H
 
 class Vec2f {
     public:
         float length;
-    
+
         Vec2f() {
             this->_x = 0;
             this->_y = 0;
@@ -20,6 +21,12 @@ class Vec2f {
             this->_y = y;
             
             this->length = std::sqrt(this->_x * this->_x + this->_y * this->_y);
+        }
+
+        static void rotate(Vec2f& v, Vec2f& center, float angle) {
+            float tmpx = v.x(), tmpy = v.y(); 
+            v.x(center.x() + ((tmpx - center.x()) * cos(angle) - (tmpy - center.y()) * sin(angle)));
+			v.y(center.y() + ((tmpx - center.x()) * sin(angle) + (tmpy - center.y()) * cos(angle)));
         }
 
         float x() {
@@ -57,12 +64,6 @@ class Vec2f {
         void normalize() {
             this->_x /= this->length;
             this->_y /= this->length;
-        }
-
-        static void rotate(Vec2f *v, Vec2f *center, float angle) {
-            float tmpx = v->x(), tmpy = v->y(); 
-            v->x(center->x() + ((tmpx - center->x()) * cos(angle) - (tmpy - center->y()) * sin(angle)));
-			v->y(center->y() + ((tmpx - center->x()) * sin(angle) + (tmpy - center->y()) * cos(angle)));
         }
         
         Vec2f operator + (Vec2f other) {

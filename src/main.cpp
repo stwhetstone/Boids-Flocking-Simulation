@@ -73,9 +73,9 @@ int main(int argc, char **argv) {
 			// find angle between vel and x axis then rotate clockwise 90 degrees
 			float angle = atan2(boid.vel.y(), boid.vel.x()) - 3.14159625 / 2.0;
 			
-			Vec2f::rotate(&top, &boid.pos, angle);
-			Vec2f::rotate(&bottomLeft, &boid.pos, angle);
-			Vec2f::rotate(&bottomRight, &boid.pos, angle);
+			Vec2f::rotate(top, boid.pos, angle);
+			Vec2f::rotate(bottomLeft, boid.pos, angle);
+			Vec2f::rotate(bottomRight, boid.pos, angle);
 
 			// bottom left to bottom right
 			SDL_RenderLine(renderer, bottomLeft.x(), bottomLeft.y() , bottomRight.x(), bottomRight.y());

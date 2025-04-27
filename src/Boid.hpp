@@ -1,4 +1,6 @@
 #include <vector>
+#include <cmath>
+
 #include "Vec2f.hpp"
 
 #ifndef BOID_H
@@ -33,7 +35,7 @@ class Boid {
 			this->index = index;
 		}
 
-		void update(float deltaTime, std::vector<Boid> flock) {
+		void update(float deltaTime, std::vector<Boid>& flock) {
 			Vec2f cohesion, alignment, separation, 
 					avgPos, avgVel, repulsion;
 			int nearby = 0, range = 40;
